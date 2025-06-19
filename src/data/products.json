@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": 1,
+    "status": true,
+    "title": "Remera blanca",
+    "description": "Remera de algodón 100%",
+    "code": "REM001",
+    "price": 4500,
+    "stock": 20,
+    "category": "indumentaria",
+    "thumbnails": []
+  }
+]
