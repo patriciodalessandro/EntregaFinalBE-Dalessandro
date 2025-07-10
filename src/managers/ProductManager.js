@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+
 const path = './src/data/products.json';
 
 class ProductManager {
@@ -17,6 +18,7 @@ class ProductManager {
 
   async addProduct(product) {
     const productos = await this.getProducts();
+
     if (productos.some(p => p.code === product.code)) {
       throw new Error('Código duplicado');
     }
@@ -32,7 +34,34 @@ class ProductManager {
     return newProduct;
   }
 
-  // Otros métodos como getProductById, updateProduct, deleteProduct...
+  async getProductById(id) {
+    const productos = await this.getProducts();
+    return productos.find(p => p.id === id) || null;
+  }
+
+  async updateProduct(id, updatedFields) {
+    const productos = await this.getProducts();
+    const index = productos.findIndex(p => p.id === id);
+
+    if (index === -1) return null;
+
+    if ('id' in updatedFields) delete updatedFields.id;
+
+    productos[index] = { ...productos[index], ...updatedFields };
+    await fs.writeFile(this.path, JSON.stringify(productos, null, 2));
+    return productos[index];
+  }
+
+  async deleteProduct(id) {
+    const productos = await this.getProducts();
+    const index = productos.findIndex(p => p.id === id);
+
+    if (index === -1) return false;
+
+    productos.splice(index, 1);
+    await fs.writeFile(this.path, JSON.stringify(productos, null, 2));
+    return true;
+  }
 }
 
 export default ProductManager;
