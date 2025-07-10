@@ -2,39 +2,31 @@ import { Router } from 'express';
 import CartManager from '../managers/CartManager.js';
 
 const router = Router();
-const cartManager = new CartManager();
+const manager = new CartManager('./src/data/carts.json');
 
-// POST /api/carts/
+// POST /api/carts → crea un carrito vacío
 router.post('/', async (req, res) => {
-  try {
-    const newCart = await cartManager.createCart();
-    res.status(201).json(newCart);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al crear el carrito' });
-  }
+  const nuevoCarrito = await manager.createCart();
+  res.status(201).json(nuevoCarrito);
 });
 
-// GET /api/carts/:cid
+// GET /api/carts/:cid → productos del carrito
 router.get('/:cid', async (req, res) => {
-  try {
-    const cart = await cartManager.getCartById(req.params.cid);
-    if (cart) {
-      res.json(cart);
-    } else {
-      res.status(404).json({ error: 'Carrito no encontrado' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Error al buscar el carrito' });
-  }
+  const cid = parseInt(req.params.cid);
+  const carrito = await manager.getCartById(cid);
+  if (!carrito) return res.status(404).json({ error: 'Carrito no encontrado' });
+  res.json(carrito.products);
 });
 
-// POST /api/carts/:cid/product/:pid
+// POST /api/carts/:cid/product/:pid → agrega producto
 router.post('/:cid/product/:pid', async (req, res) => {
+  const cid = parseInt(req.params.cid);
+  const pid = parseInt(req.params.pid);
   try {
-    const cart = await cartManager.addProductToCart(req.params.cid, req.params.pid);
-    res.status(200).json(cart);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const actualizado = await manager.addProductToCart(cid, pid);
+    res.json(actualizado);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
