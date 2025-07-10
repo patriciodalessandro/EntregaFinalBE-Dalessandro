@@ -1,65 +1,57 @@
 import express from 'express';
-import { createServer } from 'http';
 import { Server } from 'socket.io';
 import handlebars from 'express-handlebars';
-
 import productsRouter from './routes/products.router.js';
 import cartsRouter from './routes/carts.router.js';
 import viewsRouter from './routes/views.router.js';
 import ProductManager from './managers/ProductManager.js';
+import { createServer } from 'http';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = join(__filename, '..');
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-const PORT = 8080;
-const manager = new ProductManager('./src/data/products.json'); // ruta actualizada
+const productManager = new ProductManager();
 
-// Configuración Handlebars
-app.engine('handlebars', handlebars.engine());
-app.set('views', './src/views');
-app.set('view engine', 'handlebars');
-
-// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('./src/public')); // si luego agregás CSS o JS
+
+app.use(express.static(join(__dirname, 'public')));
+
+// Configurar Handlebars
+app.engine('handlebars', handlebars.engine());
+app.set('view engine', 'handlebars');
+app.set('views', './src/views');
 
 // Rutas
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
 
-// Websockets
+// WebSockets
 io.on('connection', (socket) => {
-  console.log('🟢 Cliente conectado:', socket.id);
+  console.log('Cliente conectado por websocket');
 
-  manager.getProducts().then(products => {
-    socket.emit('productos', products);
+  socket.on('new-product', async (product) => {
+    await productManager.addProduct(product);
+    const productos = await productManager.getProducts();
+    io.emit('productos', productos);
   });
 
-  socket.on('nuevoProducto', async (productData) => {
-    try {
-      await manager.addProduct(productData);
-      const productos = await manager.getProducts();
-      io.emit('productos', productos);
-    } catch (error) {
-      socket.emit('error', error.message);
-    }
-  });
-
-  socket.on('eliminarProducto', async (id) => {
-    try {
-      await manager.deleteProduct(id);
-      const productos = await manager.getProducts();
-      io.emit('productos', productos);
-    } catch (error) {
-      socket.emit('error', error.message);
-    }
+  socket.on('delete-product', async (id) => {
+    await productManager.deleteProduct(id);
+    const productos = await productManager.getProducts();
+    io.emit('productos', productos);
   });
 });
 
-// Iniciar servidor
+// Puerto
+const PORT = 8080;
 httpServer.listen(PORT, () => {
-  console.log(`✅ Servidor funcionando en http://localhost:${PORT}`);
+  console.log(`Servidor funcionando en http://localhost:${PORT}`);
 });

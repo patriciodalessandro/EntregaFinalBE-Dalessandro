@@ -9,5 +9,16 @@
     "stock": 20,
     "category": "indumentaria",
     "thumbnails": []
+  },
+  {
+    "id": 2,
+    "status": true,
+    "title": "Camisa negra",
+    "description": "Camisa de lino",
+    "code": "CAM2025",
+    "price": 8500,
+    "stock": 30,
+    "category": "indumentaria",
+    "thumbnails": []
   }
 ]

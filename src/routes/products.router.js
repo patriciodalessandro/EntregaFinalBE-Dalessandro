@@ -1,50 +1,44 @@
 import { Router } from 'express';
 import ProductManager from '../managers/ProductManager.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
-const manager = new ProductManager('./src/data/products.json');
+const productManager = new ProductManager(path.join(__dirname, '../data/products.json'));
 
-// GET /api/products
 router.get('/', async (req, res) => {
-  const productos = await manager.getProducts();
-  res.json(productos);
+  const products = await productManager.getProducts();
+  res.json(products);
 });
 
-// GET /api/products/:pid
 router.get('/:pid', async (req, res) => {
-  const id = parseInt(req.params.pid);
-  const producto = await manager.getProductById(id);
-  if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
-  res.json(producto);
+  const products = await productManager.getProducts();
+  const product = products.find(p => p.id === parseInt(req.params.pid));
+
+  if (!product) {
+    return res.status(404).json({ error: 'Producto no encontrado' });
+  }
+
+  res.json(product);
 });
 
-// POST /api/products
 router.post('/', async (req, res) => {
   try {
-    const nuevo = await manager.addProduct(req.body);
+    const product = req.body;
+    const nuevo = await productManager.addProduct(product);
     res.status(201).json(nuevo);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
 });
 
-// PUT /api/products/:pid
-router.put('/:pid', async (req, res) => {
-  const id = parseInt(req.params.pid);
-  try {
-    const actualizado = await manager.updateProduct(id, req.body);
-    res.json(actualizado);
-  } catch (e) {
-    res.status(404).json({ error: e.message });
-  }
-});
-
-// DELETE /api/products/:pid
 router.delete('/:pid', async (req, res) => {
-  const id = parseInt(req.params.pid);
   try {
-    await manager.deleteProduct(id);
-    res.json({ mensaje: 'Producto eliminado correctamente' });
+    await productManager.deleteProduct(req.params.pid);
+    res.status(204).send();
   } catch (e) {
     res.status(404).json({ error: e.message });
   }
