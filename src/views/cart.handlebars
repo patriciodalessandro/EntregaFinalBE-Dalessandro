@@ -1,0 +1,21 @@
+<h1>Mi carrito</h1>
+
+{{#if cart.products.length}}
+  <ul>
+    {{#each cart.products}}
+      <li>
+        <strong>{{this.product.title}}</strong><br>
+        Precio: ${{this.product.price}}<br>
+        Cantidad: {{this.quantity}}<br>
+      </li>
+    {{/each}}
+  </ul>
+{{else}}
+  <p>El carrito está vacío.</p>
+{{/if}}
+
+<a href="/home">Volver a productos</a>
+
+<script src="/js/addToCart.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/socketClient.js"></script>
