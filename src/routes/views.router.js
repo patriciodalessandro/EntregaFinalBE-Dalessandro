@@ -6,7 +6,6 @@ const router = Router()
 
 router.get('/', async (req, res) => {
   try {
-    // Verifica si ya existe un carrito en sesión o crea uno nuevo
     let cartId = req.session.cartId
 
     if (!cartId) {
@@ -34,4 +33,17 @@ router.get('/', async (req, res) => {
   }
 })
 
+router.get('/carts/:cid', async (req, res) => {
+  try {
+    const cart = await CartModel.findById(req.params.cid).populate('products.product')
+    if (!cart) return res.status(404).send('Carrito no encontrado')
+
+    res.render('cart', { cart })
+  } catch (error) {
+    console.error('Error al cargar el carrito:', error)
+    res.status(500).send('Error al cargar el carrito')
+  }
+})
+
 export default router
+

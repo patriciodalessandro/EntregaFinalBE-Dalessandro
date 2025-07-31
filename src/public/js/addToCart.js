@@ -1,25 +1,25 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const buttons = document.querySelectorAll('.add-to-cart-btn');
+  const buttons = document.querySelectorAll('.add-to-cart-btn')
 
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const productId = btn.dataset.pid;
-      const cartId = btn.dataset.cid;
+  buttons.forEach(button => {
+    button.addEventListener('click', async () => {
+      const productId = button.dataset.pid
+      const cartId = button.dataset.cid
 
       try {
-        const res = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+        const response = await fetch(`/api/carts/${cartId}/product/${productId}`, {
           method: 'POST',
-        });
+        })
 
-        if (res.ok) {
-          alert('Producto agregado al carrito');
+        if (response.ok) {
+          alert('Producto agregado al carrito!')
         } else {
-          alert('Error al agregar el producto');
+          alert('Error al agregar producto al carrito')
         }
-      } catch (err) {
-        console.error(err);
-        alert('Error al agregar el producto');
+      } catch (error) {
+        console.error('Error al hacer fetch:', error)
+        alert('Error inesperado')
       }
-    });
-  });
-});
+    })
+  })
+})
