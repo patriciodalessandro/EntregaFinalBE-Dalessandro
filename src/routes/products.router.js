@@ -1,37 +1,41 @@
 import { Router } from 'express';
 import ProductManager from '../managers/ProductManager.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const router = Router();
-const productManager = new ProductManager(path.join(__dirname, '../data/products.json'));
+const productManager = new ProductManager();
 
 router.get('/', async (req, res) => {
-  const products = await productManager.getProducts();
-  res.json(products);
+  try {
+    // Recibir los query params limit, page, sort, query
+    const { limit, page, sort, query } = req.query;
+    
+    // Llamar al método que devuelve paginación y filtros
+    const result = await productManager.getProducts({ limit, page, sort, query });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
 });
 
 router.get('/:pid', async (req, res) => {
-  const products = await productManager.getProducts();
-  const product = products.find(p => p.id === parseInt(req.params.pid));
-
-  if (!product) {
-    return res.status(404).json({ error: 'Producto no encontrado' });
+  try {
+    const product = await productManager.getProductById(req.params.pid);
+    if (!product) {
+      return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
+    }
+    res.json({ status: 'success', payload: product });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
   }
-
-  res.json(product);
 });
 
 router.post('/', async (req, res) => {
   try {
-    const product = req.body;
-    const nuevo = await productManager.addProduct(product);
-    res.status(201).json(nuevo);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    const newProduct = await productManager.addProduct(req.body);
+    res.status(201).json({ status: 'success', payload: newProduct });
+  } catch (error) {
+    res.status(400).json({ status: 'error', message: error.message });
   }
 });
 
@@ -39,8 +43,8 @@ router.delete('/:pid', async (req, res) => {
   try {
     await productManager.deleteProduct(req.params.pid);
     res.status(204).send();
-  } catch (e) {
-    res.status(404).json({ error: e.message });
+  } catch (error) {
+    res.status(404).json({ status: 'error', message: error.message });
   }
 });
 

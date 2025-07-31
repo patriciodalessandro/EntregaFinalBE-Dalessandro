@@ -6,11 +6,20 @@ import cartsRouter from './routes/carts.router.js';
 import viewsRouter from './routes/views.router.js';
 import ProductManager from './managers/ProductManager.js';
 import { createServer } from 'http';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
+// Configuración para __dirname en ES modules
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = join(__filename, '..');
+const __dirname = dirname(__filename);
+
+// Cargar variables de entorno desde .env
+dotenv.config();
+
+// Conexión a MongoDB
+const MONGO_URI = process.env.MONGO_URI;
 
 const app = express();
 const httpServer = createServer(app);
@@ -20,7 +29,6 @@ const productManager = new ProductManager();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(express.static(join(__dirname, 'public')));
 
 // Configurar Handlebars
@@ -38,20 +46,37 @@ io.on('connection', (socket) => {
   console.log('Cliente conectado por websocket');
 
   socket.on('new-product', async (product) => {
-    await productManager.addProduct(product);
-    const productos = await productManager.getProducts();
-    io.emit('productos', productos);
+    try {
+      await productManager.addProduct(product);
+      const productos = await productManager.getProducts({});
+      io.emit('productos', productos);
+    } catch (error) {
+      console.error('Error agregando producto:', error.message);
+    }
   });
 
   socket.on('delete-product', async (id) => {
-    await productManager.deleteProduct(id);
-    const productos = await productManager.getProducts();
-    io.emit('productos', productos);
+    try {
+      await productManager.deleteProduct(id);
+      const productos = await productManager.getProducts({});
+      io.emit('productos', productos);
+    } catch (error) {
+      console.error('Error eliminando producto:', error.message);
+    }
   });
 });
 
-// Puerto
 const PORT = 8080;
-httpServer.listen(PORT, () => {
-  console.log(`Servidor funcionando en http://localhost:${PORT}`);
-});
+
+// Levantar servidor solo si conecta bien a MongoDB
+mongoose.connect(MONGO_URI)
+  .then(() => {
+    console.log('MongoDB conectado con éxito');
+    httpServer.listen(PORT, () => {
+      console.log(`Servidor funcionando en http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Error al conectar MongoDB:', err);
+    process.exit(1); // Detener app si falla conexión DB
+  });
