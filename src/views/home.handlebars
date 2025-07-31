@@ -1,23 +1,33 @@
 <h1>Lista de Productos</h1>
 
-<a href="/carts/64ee8cb7caa5082d4b3e9644" style="display: inline-block; margin-bottom: 20px;">
+<a href="/carts/{{cid}}" style="display: inline-block; margin-bottom: 20px;">
   Ver Carrito Actual
 </a>
 
-<div id="productContainer" style="display: flex; flex-wrap: wrap; gap: 20px;">
+<!-- Contenedor de productos con id para WebSockets -->
+<div id="realTimeProducts" style="display: flex; flex-wrap: wrap; gap: 20px;">
   {{#each products.docs}}
-    <div style="border: 1px solid #ccc; padding: 10px; width: 250px;">
+    <div class="product-card" style="border: 1px solid #ccc; padding: 10px; width: 250px;">
       <h3>{{this.title}}</h3>
       <p><strong>Descripción:</strong> {{this.description}}</p>
       <p><strong>Precio:</strong> ${{this.price}}</p>
       <p><strong>Stock:</strong> {{this.stock}}</p>
-      <button onclick="addToCart('{{this._id}}')">Agregar al carrito</button>
+      
+      <button 
+        class="add-to-cart-btn" 
+        data-pid="{{this._id}}" 
+        data-cid="{{../cid}}"
+      >
+        Agregar al carrito
+      </button>
+
       <br />
       <a href="/products/{{this._id}}">Ver producto</a>
     </div>
   {{/each}}
 </div>
 
+<!-- Paginación -->
 <div style="margin-top: 30px;">
   {{#if products.hasPrevPage}}
     <a href="/?page={{products.prevPage}}">Página anterior</a>
@@ -32,6 +42,7 @@
 
 <hr />
 
+<!-- Formulario para agregar productos en tiempo real -->
 <h2>Agregar producto nuevo (real time)</h2>
 <form id="productForm">
   <input type="text" name="title" placeholder="Título" required />
@@ -43,6 +54,7 @@
   <button type="submit">Agregar</button>
 </form>
 
+<!-- Scripts -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/socketClient.js"></script>
 <script src="/js/addToCart.js"></script>

@@ -29,7 +29,8 @@ const productManager = new ProductManager();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(join(__dirname, 'public')));
+
+app.use(express.static(join(__dirname, '..', 'public')));
 
 // Configurar Handlebars
 app.engine('handlebars', handlebars.engine());
