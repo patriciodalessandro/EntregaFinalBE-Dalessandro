@@ -1,49 +1,47 @@
-const socket = io()
+const socket = io();
 
 // Escuchar lista productos actualizada y actualizar HTML
 socket.on('productos', productos => {
-  const container = document.getElementById('realTimeProducts')
-  if (!container) return
+  const container = document.getElementById('realTimeProducts');
+  if (!container) return;
 
-  container.innerHTML = ''
+  container.innerHTML = '';
 
   productos.forEach(product => {
-    const div = document.createElement('div')
-    div.classList.add('product-card')
-    div.style.border = '1px solid #ccc'
-    div.style.padding = '10px'
-    div.style.width = '250px'
-    div.style.marginBottom = '10px'
+    const div = document.createElement('div');
+    div.classList.add('product-card');
+    div.style.border = '1px solid #ccc';
+    div.style.padding = '10px';
+    div.style.width = '250px';
+    div.style.marginBottom = '10px';
 
     div.innerHTML = `
       <h3>${product.title}</h3>
       <p><strong>Descripción:</strong> ${product.description}</p>
       <p><strong>Precio:</strong> $${product.price}</p>
       <p><strong>Stock:</strong> ${product.stock}</p>
-      <button class="add-to-cart-btn" data-pid="${product._id}" data-cid="${product._id}">Agregar al carrito</button>
-      <br />
       <a href="/product/${product._id}">Ver producto</a>
-    `
+    `;
 
-    container.appendChild(div)
-  })
-})
+    container.appendChild(div);
+  });
+});
 
 // Enviar nuevo producto a servidor
-const form = document.getElementById('productForm')
+const form = document.getElementById('productForm');
 if (form) {
   form.addEventListener('submit', e => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const formData = new FormData(form)
-    const product = {}
+    const formData = new FormData(form);
+    const product = {};
 
     formData.forEach((value, key) => {
-      product[key] = value
-    })
+      product[key] = value;
+    });
 
-    socket.emit('new-product', product)
+    socket.emit('new-product', product);
 
-    form.reset()
-  })
+    form.reset();
+  });
 }

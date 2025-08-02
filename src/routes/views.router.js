@@ -1,13 +1,13 @@
 import { Router } from 'express'
-import CartModel from '../data/models/cart.model.js'
-import ProductModel from '../data/models/product.model.js'
+import CartModel from '../models/CartModel.js'
+import ProductModel from '../models/ProductModel.js'
 
 const router = Router()
 
 // Ruta principal: listado de productos con paginación
 router.get('/', async (req, res) => {
   try {
-    let cartId = req.session.cartId
+    let cartId = req.session?.cartId
 
     if (!cartId) {
       const newCart = await CartModel.create({ products: [] })
@@ -47,18 +47,28 @@ router.get('/carts/:cid', async (req, res) => {
   }
 })
 
-// Ruta detalle producto por id
-router.get('/product/:pid', async (req, res) => {
+// Ruta detalle producto individual
+router.get('/products/:pid', async (req, res) => {
   try {
     const product = await ProductModel.findById(req.params.pid)
     if (!product) return res.status(404).send('Producto no encontrado')
 
-    res.render('productDetail', { product })
+    res.render('product', { product })
   } catch (error) {
     console.error('Error al mostrar producto individual:', error)
     res.status(500).send('Error interno')
   }
 })
 
-export default router
+// Ruta vista en tiempo real
+router.get('/realtimeproducts', async (req, res) => {
+  try {
+    const productos = await ProductModel.find({})
+    res.render('realTimeProducts', { productos })
+  } catch (error) {
+    console.error('Error al cargar productos en tiempo real:', error)
+    res.status(500).send('Error interno')
+  }
+})
 
+export default router

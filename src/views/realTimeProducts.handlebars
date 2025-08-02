@@ -1,6 +1,6 @@
 <h1>Lista de productos en tiempo real</h1>
 
-<form id="productForm">
+<form id="productForm" style="margin-bottom: 20px;">
   <input type="text" name="title" placeholder="Título" required />
   <input type="text" name="description" placeholder="Descripción" required />
   <input type="text" name="code" placeholder="Código" required />
@@ -11,14 +11,18 @@
   <button type="submit">Agregar producto</button>
 </form>
 
-<ul id="lista">
+<!-- Contenedor de productos para WebSocket -->
+<div id="realTimeProducts" style="display: flex; flex-wrap: wrap; gap: 20px;">
   {{#each productos}}
-    <li data-id="{{this.id}}">
-      <strong>{{this.title}}</strong> - ${{this.price}}
-      <button class="eliminar">Eliminar</button>
-    </li>
+    <div class="product-card" style="border: 1px solid #ccc; padding: 10px; width: 250px;" data-id="{{this._id}}">
+      <h3>{{this.title}}</h3>
+      <p><strong>Descripción:</strong> {{this.description}}</p>
+      <p><strong>Precio:</strong> ${{this.price}}</p>
+      <p><strong>Stock:</strong> {{this.stock}}</p>
+      <button class="delete-product-btn" data-id="{{this._id}}">Eliminar</button>
+    </div>
   {{/each}}
-</ul>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/socketClient.js"></script>

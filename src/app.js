@@ -10,6 +10,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
 
 // Configuración para __dirname en ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -22,6 +24,14 @@ const MONGO_URI = process.env.MONGO_URI;
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
+
+// Session Middleware (AGREGADO AHORA)
+app.use(session({
+  secret: 'secretCoder',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: MONGO_URI }),
+}));
 
 // Middlewares
 app.use(express.json());
@@ -41,31 +51,37 @@ app.use('/', viewsRouter);
 // WebSockets
 const productManager = new ProductManager();
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log('Cliente conectado por websocket');
 
+  // Enviar productos al conectar
+  const productos = await productManager.getProducts({});
+  socket.emit('productos', productos.payload);
+
+  // Listener agregar producto
   socket.on('new-product', async (product) => {
     try {
       await productManager.addProduct(product);
-      const productos = await productManager.getProducts({});
-      io.emit('productos', productos);
+      const productosActualizados = await productManager.getProducts({});
+      io.emit('productos', productosActualizados.payload);
     } catch (error) {
       console.error('Error agregando producto:', error.message);
     }
   });
 
+  // Listener eliminar producto
   socket.on('delete-product', async (id) => {
     try {
       await productManager.deleteProduct(id);
-      const productos = await productManager.getProducts({});
-      io.emit('productos', productos);
+      const productosActualizados = await productManager.getProducts({});
+      io.emit('productos', productosActualizados.payload);
     } catch (error) {
       console.error('Error eliminando producto:', error.message);
     }
   });
 });
 
-// Conexión a MongoDB y levantado del servidor
+// Conexión a MongoDB y levantar servidor
 const PORT = 8080;
 
 mongoose.connect(MONGO_URI)

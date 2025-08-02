@@ -1,8 +1,10 @@
-<h1>Productos</h1>
+<h1>Lista de Productos</h1>
 
-<a href="/carts/{{cid}}" style="display: inline-block; margin-bottom: 20px;">Ver Carrito Actual</a>
+<a href="/carts/{{cid}}" style="display: inline-block; margin-bottom: 20px;">
+  Ver Carrito Actual
+</a>
 
-<div class="products-container" style="display: flex; flex-wrap: wrap; gap: 20px;">
+<div id="product-list" class="products-container" style="display: flex; flex-wrap: wrap; gap: 20px;">
   {{#each products.docs}}
     <div class="product-card" style="border: 1px solid #ccc; padding: 10px; width: 250px;">
       <h3>{{this.title}}</h3>
@@ -19,7 +21,7 @@
       </button>
 
       <br />
-      <a href="/product/{{this._id}}">Ver producto</a>
+      <a href="/products/{{this._id}}">Ver producto</a>
     </div>
   {{/each}}
 </div>
@@ -39,6 +41,4 @@
 
 <!-- Scripts para WebSockets y agregar al carrito -->
 <script src="/socket.io/socket.io.js"></script>
-<script src="/js/socketClient.js"></script>
 <script src="/js/addToCart.js"></script>
-
