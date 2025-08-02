@@ -1,48 +1,48 @@
 const socket = io()
 
-// Cuando se recibe un nuevo producto del servidor
-socket.on('nuevoProducto', (producto) => {
-  const container = document.getElementById('productContainer')
+// Escuchar lista productos actualizada y actualizar HTML
+socket.on('productos', productos => {
+  const container = document.getElementById('realTimeProducts')
+  if (!container) return
 
-  const div = document.createElement('div')
-  div.style.border = '1px solid #ccc'
-  div.style.padding = '10px'
-  div.style.width = '250px'
-  div.innerHTML = `
-    <h3>${producto.title}</h3>
-    <p><strong>Descripción:</strong> ${producto.description}</p>
-    <p><strong>Precio:</strong> $${producto.price}</p>
-    <p><strong>Stock:</strong> ${producto.stock}</p>
-    <button 
-      class="add-to-cart-btn"
-      data-pid="${producto._id}"
-      data-cid="${producto.cid}"
-    >
-      Agregar al carrito
-    </button>
-    <br />
-    <a href="/products/${producto._id}">Ver producto</a>
-  `
+  container.innerHTML = ''
 
-  container.appendChild(div)
+  productos.forEach(product => {
+    const div = document.createElement('div')
+    div.classList.add('product-card')
+    div.style.border = '1px solid #ccc'
+    div.style.padding = '10px'
+    div.style.width = '250px'
+    div.style.marginBottom = '10px'
+
+    div.innerHTML = `
+      <h3>${product.title}</h3>
+      <p><strong>Descripción:</strong> ${product.description}</p>
+      <p><strong>Precio:</strong> $${product.price}</p>
+      <p><strong>Stock:</strong> ${product.stock}</p>
+      <button class="add-to-cart-btn" data-pid="${product._id}" data-cid="${product._id}">Agregar al carrito</button>
+      <br />
+      <a href="/product/${product._id}">Ver producto</a>
+    `
+
+    container.appendChild(div)
+  })
 })
 
-// Envío del nuevo producto al servidor
+// Enviar nuevo producto a servidor
 const form = document.getElementById('productForm')
-
 if (form) {
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', e => {
     e.preventDefault()
 
     const formData = new FormData(form)
-    const nuevoProducto = {}
+    const product = {}
 
     formData.forEach((value, key) => {
-      nuevoProducto[key] = value
+      product[key] = value
     })
 
-    // Enviar por WebSocket
-    socket.emit('crearProducto', nuevoProducto)
+    socket.emit('new-product', product)
 
     form.reset()
   })

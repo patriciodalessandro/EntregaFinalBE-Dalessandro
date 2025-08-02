@@ -17,25 +17,21 @@ const __dirname = dirname(__filename);
 
 // Cargar variables de entorno desde .env
 dotenv.config();
-
-// Conexión a MongoDB
 const MONGO_URI = process.env.MONGO_URI;
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-const productManager = new ProductManager();
-
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(express.static(join(__dirname, '..', 'public')));
 
-// Configurar Handlebars
+// Configuración de Handlebars
 app.engine('handlebars', handlebars.engine());
 app.set('view engine', 'handlebars');
-app.set('views', './src/views');
+app.set('views', join(__dirname, 'views'));
 
 // Rutas
 app.use('/api/products', productsRouter);
@@ -43,6 +39,8 @@ app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
 
 // WebSockets
+const productManager = new ProductManager();
+
 io.on('connection', (socket) => {
   console.log('Cliente conectado por websocket');
 
@@ -67,9 +65,9 @@ io.on('connection', (socket) => {
   });
 });
 
+// Conexión a MongoDB y levantado del servidor
 const PORT = 8080;
 
-// Levantar servidor solo si conecta bien a MongoDB
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('MongoDB conectado con éxito');
@@ -79,5 +77,7 @@ mongoose.connect(MONGO_URI)
   })
   .catch(err => {
     console.error('Error al conectar MongoDB:', err);
-    process.exit(1); // Detener app si falla conexión DB
+    process.exit(1);
   });
+
+export { io };

@@ -4,6 +4,7 @@ import ProductModel from '../data/models/product.model.js'
 
 const router = Router()
 
+// Ruta principal: listado de productos con paginación
 router.get('/', async (req, res) => {
   try {
     let cartId = req.session.cartId
@@ -33,6 +34,7 @@ router.get('/', async (req, res) => {
   }
 })
 
+// Ruta carrito por id
 router.get('/carts/:cid', async (req, res) => {
   try {
     const cart = await CartModel.findById(req.params.cid).populate('products.product')
@@ -42,6 +44,19 @@ router.get('/carts/:cid', async (req, res) => {
   } catch (error) {
     console.error('Error al cargar el carrito:', error)
     res.status(500).send('Error al cargar el carrito')
+  }
+})
+
+// Ruta detalle producto por id
+router.get('/product/:pid', async (req, res) => {
+  try {
+    const product = await ProductModel.findById(req.params.pid)
+    if (!product) return res.status(404).send('Producto no encontrado')
+
+    res.render('productDetail', { product })
+  } catch (error) {
+    console.error('Error al mostrar producto individual:', error)
+    res.status(500).send('Error interno')
   }
 })
 

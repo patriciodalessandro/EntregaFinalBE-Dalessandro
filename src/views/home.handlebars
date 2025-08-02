@@ -1,18 +1,15 @@
-<h1>Lista de Productos</h1>
+<h1>Productos</h1>
 
-<a href="/carts/{{cid}}" style="display: inline-block; margin-bottom: 20px;">
-  Ver Carrito Actual
-</a>
+<a href="/carts/{{cid}}" style="display: inline-block; margin-bottom: 20px;">Ver Carrito Actual</a>
 
-<!-- Contenedor de productos con id para WebSockets -->
-<div id="realTimeProducts" style="display: flex; flex-wrap: wrap; gap: 20px;">
+<div class="products-container" style="display: flex; flex-wrap: wrap; gap: 20px;">
   {{#each products.docs}}
     <div class="product-card" style="border: 1px solid #ccc; padding: 10px; width: 250px;">
       <h3>{{this.title}}</h3>
       <p><strong>Descripción:</strong> {{this.description}}</p>
       <p><strong>Precio:</strong> ${{this.price}}</p>
       <p><strong>Stock:</strong> {{this.stock}}</p>
-      
+
       <button 
         class="add-to-cart-btn" 
         data-pid="{{this._id}}" 
@@ -22,7 +19,7 @@
       </button>
 
       <br />
-      <a href="/products/{{this._id}}">Ver producto</a>
+      <a href="/product/{{this._id}}">Ver producto</a>
     </div>
   {{/each}}
 </div>
@@ -40,21 +37,8 @@
   {{/if}}
 </div>
 
-<hr />
-
-<!-- Formulario para agregar productos en tiempo real -->
-<h2>Agregar producto nuevo (real time)</h2>
-<form id="productForm">
-  <input type="text" name="title" placeholder="Título" required />
-  <input type="text" name="description" placeholder="Descripción" required />
-  <input type="number" name="price" placeholder="Precio" required />
-  <input type="number" name="stock" placeholder="Stock" required />
-  <input type="text" name="code" placeholder="Código" required />
-  <input type="text" name="category" placeholder="Categoría" required />
-  <button type="submit">Agregar</button>
-</form>
-
-<!-- Scripts -->
+<!-- Scripts para WebSockets y agregar al carrito -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/socketClient.js"></script>
 <script src="/js/addToCart.js"></script>
+
