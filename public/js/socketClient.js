@@ -21,10 +21,19 @@ socket.on('productos', productos => {
       <p><strong>Precio:</strong> $${product.price}</p>
       <p><strong>Stock:</strong> ${product.stock}</p>
       <a href="/product/${product._id}">Ver producto</a>
+      <button class="delete-btn" data-id="${product._id}">Eliminar</button>
     `;
 
     container.appendChild(div);
   });
+});
+
+// Event Delegation para botones eliminar
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('delete-btn')) {
+    const id = e.target.getAttribute('data-id');
+    socket.emit('eliminarProducto', id);
+  }
 });
 
 // Enviar nuevo producto a servidor

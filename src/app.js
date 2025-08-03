@@ -25,7 +25,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// Session Middleware (AGREGADO AHORA)
+// Session Middleware
 app.use(session({
   secret: 'secretCoder',
   resave: false,
@@ -69,8 +69,8 @@ io.on('connection', async (socket) => {
     }
   });
 
-  // Listener eliminar producto
-  socket.on('delete-product', async (id) => {
+  // Listener eliminar producto (CAMBIO NOMBRE EVENTO)
+  socket.on('eliminarProducto', async (id) => {
     try {
       await productManager.deleteProduct(id);
       const productosActualizados = await productManager.getProducts({});

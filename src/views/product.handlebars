@@ -1,7 +1,13 @@
-<h1>{{product.title}}</h1>
-<p>{{product.description}}</p>
-<p><strong>Precio:</strong> ${{product.price}}</p>
-<p><strong>Categoría:</strong> {{product.category}}</p>
-<p><strong>Stock:</strong> {{product.stock}}</p>
+<h1>Detalle del Producto</h1>
 
-<a href="/">Volver a Productos</a>
+<div style="border: 1px solid #ccc; padding: 20px; width: 400px;">
+  <h2>{{product.title}}</h2>
+  <p><strong>Descripción:</strong> {{product.description}}</p>
+  <p><strong>Código:</strong> {{product.code}}</p>
+  <p><strong>Precio:</strong> ${{product.price}}</p>
+  <p><strong>Stock:</strong> {{product.stock}}</p>
+  <p><strong>Categoría:</strong> {{product.category}}</p>
+  <img src="{{product.thumbnail}}" alt="{{product.title}}" style="max-width: 100%;">
+</div>
+
+<a href="/">Volver al Home</a>
