@@ -1,31 +1,46 @@
 import { Router } from 'express';
 import ProductManager from '../managers/ProductManager.js';
+import CartManager from '../managers/CartManager.js';
+import ProductModel from '../models/ProductModel.js';  // Necesitamos esto para paginar desde Mongo
 
 const router = Router();
 const productManager = new ProductManager();
+const cartManager = new CartManager();
 
 router.get('/', async (req, res) => {
-  const products = await productManager.getProducts({});
-  res.render('home', { products: products.payload });
-});
-
-router.get('/realtimeproducts', (req, res) => {
-  res.render('realTimeProducts');
-});
-
-// NUEVA RUTA ➜ Vista de producto individual
-router.get('/product/:pid', async (req, res) => {
-  const pid = req.params.pid;
   try {
-    const product = await productManager.getProductById(pid);
-    if (!product) {
-      return res.status(404).send('Producto no encontrado');
-    }
-    res.render('product', { product });
+    const { page = 1 } = req.query;
+    const products = await ProductModel.paginate({}, { page, limit: 10, lean: true });
+
+    let cart = await cartManager.createCart();
+
+    res.render('home', { products, cid: cart._id });
   } catch (error) {
-    console.error('Error obteniendo producto:', error.message);
-    res.status(500).send('Error interno');
+    res.status(500).send('Error al cargar productos');
+  }
+});
+
+router.get('/products/:pid', async (req, res) => {
+  try {
+    const product = await ProductModel.findById(req.params.pid).lean();
+    if (!product) return res.status(404).send('Producto no encontrado');
+
+    let cart = await cartManager.createCart();
+
+    res.render('productDetail', { product, cid: cart._id });
+  } catch (error) {
+    res.status(500).send('Error al cargar el producto');
+  }
+});
+
+router.get('/carts/:cid', async (req, res) => {
+  try {
+    const cart = await cartManager.getCartByIdPopulated(req.params.cid);
+    res.render('cart', { cart });
+  } catch (error) {
+    res.status(500).send('Error al cargar el carrito');
   }
 });
 
 export default router;
+

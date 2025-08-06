@@ -44,7 +44,14 @@ class ProductManager {
   async addProduct(data) {
     const exists = await ProductModel.findOne({ code: data.code });
     if (exists) throw new Error('Código duplicado');
-    return await ProductModel.create(data);
+
+    const productData = {
+      ...data,
+      thumbnails: [data.thumbnail], 
+    };
+    delete productData.thumbnail; 
+
+    return await ProductModel.create(productData);
   }
 
   async deleteProduct(id) {
