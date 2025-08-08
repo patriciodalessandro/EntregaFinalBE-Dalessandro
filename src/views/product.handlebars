@@ -7,7 +7,12 @@
   <p><strong>Precio:</strong> ${{product.price}}</p>
   <p><strong>Stock:</strong> {{product.stock}}</p>
   <p><strong>Categoría:</strong> {{product.category}}</p>
-  <img src="{{product.thumbnails.[0]}}" alt="{{product.title}}" style="max-width: 100%;">
+  {{#if product.thumbnails.[0]}}
+    <img src="{{product.thumbnails.[0]}}" alt="{{product.title}}" style="max-width: 100%;">
+  {{/if}}
+  <p><strong>Estado:</strong> 
+    {{#if product.status}}Disponible{{else}}No disponible{{/if}}
+  </p>
 </div>
 
 <button 

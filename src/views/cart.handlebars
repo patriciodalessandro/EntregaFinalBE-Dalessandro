@@ -5,8 +5,10 @@
     {{#each cart.products}}
       <li>
         <strong>{{this.product.title}}</strong><br>
+        Descripción: {{this.product.description}}<br>
         Precio: ${{this.product.price}}<br>
         Cantidad: {{this.quantity}}<br>
+        <hr>
       </li>
     {{/each}}
   </ul>

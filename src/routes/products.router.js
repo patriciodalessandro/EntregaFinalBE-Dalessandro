@@ -1,57 +1,67 @@
 import { Router } from 'express';
-import ProductManager from '../managers/ProductManager.js';
+import { productModel } from '../models/product.model.js';
 
 const router = Router();
-const productManager = new ProductManager();
 
-// GET / --> Listado paginado de productos (ya lo tenías)
+// GET con paginación, filtros y ordenamiento
 router.get('/', async (req, res) => {
   try {
-    const { limit, page, sort, query } = req.query;
-    const result = await productManager.getProducts({ limit, page, sort, query });
-    res.json(result);
+    const { limit = 10, page = 1, sort, query } = req.query;
+
+    const filter = query ? { category: query } : {};
+    const options = {
+      limit: parseInt(limit),
+      page: parseInt(page),
+      sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {}
+    };
+
+    const products = await productModel.paginate(filter, options);
+    res.json(products);
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// GET /:pid --> Si viene desde un navegador, renderizo una vista, si es API devuelvo JSON
+// GET por ID
 router.get('/:pid', async (req, res) => {
   try {
-    const product = await productManager.getProductById(req.params.pid);
-    if (!product) {
-      return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
-    }
-
-    // Si acepta HTML (viene desde el navegador), renderizo la vista
-    if (req.accepts('html')) {
-      return res.render('productDetail', { product });
-    }
-
-    // Si no, respondo con JSON (por si se llama desde Postman)
-    res.json({ status: 'success', payload: product });
+    const product = await productModel.findById(req.params.pid);
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+    res.json(product);
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// POST / --> Crear producto (API)
+// POST
 router.post('/', async (req, res) => {
   try {
-    const newProduct = await productManager.addProduct(req.body);
-    res.status(201).json({ status: 'success', payload: newProduct });
+    const newProduct = await productModel.create(req.body);
+    res.status(201).json(newProduct);
   } catch (error) {
-    res.status(400).json({ status: 'error', message: error.message });
+    res.status(400).json({ error: error.message });
   }
 });
 
-// DELETE /:pid --> Eliminar producto
+// PUT
+router.put('/:pid', async (req, res) => {
+  try {
+    const updatedProduct = await productModel.findByIdAndUpdate(req.params.pid, req.body, { new: true });
+    if (!updatedProduct) return res.status(404).json({ error: 'Producto no encontrado' });
+    res.json(updatedProduct);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE
 router.delete('/:pid', async (req, res) => {
   try {
-    await productManager.deleteProduct(req.params.pid);
-    res.status(204).send();
+    const deletedProduct = await productModel.findByIdAndDelete(req.params.pid);
+    if (!deletedProduct) return res.status(404).json({ error: 'Producto no encontrado' });
+    res.json({ message: 'Producto eliminado con exito' });
   } catch (error) {
-    res.status(404).json({ status: 'error', message: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 

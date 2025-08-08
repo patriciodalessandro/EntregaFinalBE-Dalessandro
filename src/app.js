@@ -12,6 +12,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
+import { __dirname } from './utils.js';
+import path from 'path';
 
 // Configuración para __dirname en ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +22,11 @@ const __dirname = dirname(__filename);
 // Cargar variables de entorno desde .env
 dotenv.config();
 const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error('Error: No se encontró MONGO_URI en el archivo .env');
+  process.exit(1);
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -30,18 +37,21 @@ app.use(session({
   secret: 'secretCoder',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: MONGO_URI }),
+  store: MongoStore.create({
+    mongoUrl: MONGO_URI,
+    ttl: 3600 // tiempo de vida de sesión en segundos
+  }),
 }));
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuración de Handlebars
 app.engine('handlebars', handlebars.engine());
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'handlebars');
-app.set('views', join(__dirname, 'views'));
 
 // Rutas
 app.use('/api/products', productsRouter);
@@ -52,11 +62,15 @@ app.use('/', viewsRouter);
 const productManager = new ProductManager();
 
 io.on('connection', async (socket) => {
-  console.log('Cliente conectado por websocket');
+  console.log('Cliente conectado por WebSocket');
 
-  // Enviar productos al conectar
-  const productos = await productManager.getProducts({});
-  socket.emit('productos', productos.payload);
+  try {
+    // Enviar productos al conectar
+    const productos = await productManager.getProducts({});
+    socket.emit('productos', productos.payload);
+  } catch (error) {
+    console.error('Error cargando productos iniciales:', error.message);
+  }
 
   // Listener agregar producto
   socket.on('new-product', async (product) => {
@@ -69,7 +83,7 @@ io.on('connection', async (socket) => {
     }
   });
 
-  // Listener eliminar producto (CAMBIO NOMBRE EVENTO)
+  // Listener eliminar producto
   socket.on('eliminarProducto', async (id) => {
     try {
       await productManager.deleteProduct(id);
@@ -84,15 +98,18 @@ io.on('connection', async (socket) => {
 // Conexión a MongoDB y levantar servidor
 const PORT = 8080;
 
-mongoose.connect(MONGO_URI)
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
   .then(() => {
-    console.log('MongoDB conectado con éxito');
+    console.log('✅ MongoDB conectado con éxito');
     httpServer.listen(PORT, () => {
-      console.log(`Servidor funcionando en http://localhost:${PORT}`);
+      console.log(`🚀 Servidor funcionando en http://localhost:${PORT}`);
     });
   })
   .catch(err => {
-    console.error('Error al conectar MongoDB:', err);
+    console.error('❌ Error al conectar MongoDB:', err);
     process.exit(1);
   });
 

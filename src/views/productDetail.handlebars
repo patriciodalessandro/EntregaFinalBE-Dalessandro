@@ -1,0 +1,10 @@
+<h1>{{product.title}}</h1>
+<p><strong>Precio:</strong> ${{product.price}}</p>
+<p><strong>Descripción:</strong> {{product.description}}</p>
+<p><strong>Categoría:</strong> {{product.category}}</p>
+<p><strong>Stock:</strong> {{product.stock}}</p>
+<p><strong>Estado:</strong> {{#if product.status}}Disponible{{else}}No disponible{{/if}}</p>
+
+<button class="add-to-cart-btn" data-pid="{{product._id}}" data-cid="{{cid}}">Agregar al carrito</button>
+
+<script src="/js/addToCart.js"></script>

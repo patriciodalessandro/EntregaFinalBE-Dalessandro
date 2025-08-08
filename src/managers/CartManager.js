@@ -1,76 +1,65 @@
-import CartModel from '../models/CartModel.js';
+import { cartModel } from '../models/cart.model.js';
+import { productModel } from '../models/product.model.js';
 
-class CartManager {
-  // Crear un carrito vacío
+export default class CartManager {
   async createCart() {
-    const newCart = await CartModel.create({ products: [] });
-    return newCart;
-  }
-
-  // Obtener carrito por id con productos "populated"
-  async getCartByIdPopulated(cid) {
-    const cart = await CartModel.findById(cid).populate('products.product');
-    return cart;
-  }
-
-  // Agregar producto al carrito o aumentar cantidad
-  async addProductToCart(cid, pid) {
-    const cart = await CartModel.findById(cid);
-    if (!cart) throw new Error('Carrito no encontrado');
-
-    const productIndex = cart.products.findIndex(p => p.product.toString() === pid);
-    if (productIndex !== -1) {
-      cart.products[productIndex].quantity++;
-    } else {
-      cart.products.push({ product: pid, quantity: 1 });
+    try {
+      return await cartModel.create({ products: [] });
+    } catch (error) {
+      throw new Error(`Error creando carrito: ${error.message}`);
     }
-
-    await cart.save();
-    return cart;
   }
 
-  // Eliminar producto del carrito
-  async deleteProductFromCart(cid, pid) {
-    const cart = await CartModel.findById(cid);
-    if (!cart) throw new Error('Carrito no encontrado');
-
-    cart.products = cart.products.filter(p => p.product.toString() !== pid);
-    await cart.save();
+  async getCartById(id) {
+    try {
+      return await cartModel.findById(id).populate('products.product');
+    } catch (error) {
+      throw new Error(`Error obteniendo carrito: ${error.message}`);
+    }
   }
 
-  // Reemplazar todos los productos del carrito
-  async updateCartProducts(cid, products) {
-    const cart = await CartModel.findById(cid);
-    if (!cart) throw new Error('Carrito no encontrado');
+  async addProductToCart(cartId, productId) {
+    try {
+      const cart = await cartModel.findById(cartId);
+      if (!cart) throw new Error('Carrito no encontrado');
 
-    cart.products = products;
-    await cart.save();
-    return cart;
+      const product = await productModel.findById(productId);
+      if (!product) throw new Error('Producto no encontrado');
+
+      const existingProduct = cart.products.find(p => p.product.toString() === productId);
+      if (existingProduct) {
+        existingProduct.quantity += 1;
+      } else {
+        cart.products.push({ product: productId, quantity: 1 });
+      }
+
+      return await cart.save();
+    } catch (error) {
+      throw new Error(`Error agregando producto: ${error.message}`);
+    }
   }
 
-  // Actualizar la cantidad de un producto específico
-  async updateProductQuantity(cid, pid, quantity) {
-    if (quantity <= 0) throw new Error('Cantidad debe ser mayor a 0');
+  async removeProductFromCart(cartId, productId) {
+    try {
+      const cart = await cartModel.findById(cartId);
+      if (!cart) throw new Error('Carrito no encontrado');
 
-    const cart = await CartModel.findById(cid);
-    if (!cart) throw new Error('Carrito no encontrado');
-
-    const productInCart = cart.products.find(p => p.product.toString() === pid);
-    if (!productInCart) throw new Error('Producto no encontrado en el carrito');
-
-    productInCart.quantity = quantity;
-    await cart.save();
-    return cart;
+      cart.products = cart.products.filter(p => p.product.toString() !== productId);
+      return await cart.save();
+    } catch (error) {
+      throw new Error(`Error eliminando producto: ${error.message}`);
+    }
   }
 
-  // Vaciar carrito (eliminar todos los productos)
-  async clearCart(cid) {
-    const cart = await CartModel.findById(cid);
-    if (!cart) throw new Error('Carrito no encontrado');
+  async clearCart(cartId) {
+    try {
+      const cart = await cartModel.findById(cartId);
+      if (!cart) throw new Error('Carrito no encontrado');
 
-    cart.products = [];
-    await cart.save();
+      cart.products = [];
+      return await cart.save();
+    } catch (error) {
+      throw new Error(`Error vaciando carrito: ${error.message}`);
+    }
   }
 }
-
-export default CartManager;

@@ -1,44 +1,55 @@
 import { Router } from 'express';
-import ProductManager from '../managers/ProductManager.js';
-import CartManager from '../managers/CartManager.js';
-import ProductModel from '../models/ProductModel.js';  // Necesitamos esto para paginar desde Mongo
+import { productModel } from '../models/product.model.js';
 
 const router = Router();
-const productManager = new ProductManager();
-const cartManager = new CartManager();
 
+// Home con paginación y filtros
 router.get('/', async (req, res) => {
   try {
-    const { page = 1 } = req.query;
-    const products = await ProductModel.paginate({}, { page, limit: 10, lean: true });
+    const { page = 1, limit = 10, sort, query } = req.query;
 
-    let cart = await cartManager.createCart();
+    const filter = query ? { category: query } : {};
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {}
+    };
 
-    res.render('home', { products, cid: cart._id });
+    const products = await productModel.paginate(filter, options);
+
+    res.render('home', {
+      products: products.docs,
+      hasPrevPage: products.hasPrevPage,
+      hasNextPage: products.hasNextPage,
+      prevPage: products.prevPage,
+      nextPage: products.nextPage,
+      currentPage: products.page,
+      totalPages: products.totalPages
+    });
   } catch (error) {
-    res.status(500).send('Error al cargar productos');
+    res.status(500).send('Error cargando la vista');
   }
 });
 
-router.get('/products/:pid', async (req, res) => {
+// Vista de producto individual
+router.get('/product/:pid', async (req, res) => {
   try {
-    const product = await ProductModel.findById(req.params.pid).lean();
+    const product = await productModel.findById(req.params.pid);
     if (!product) return res.status(404).send('Producto no encontrado');
 
-    let cart = await cartManager.createCart();
-
-    res.render('productDetail', { product, cid: cart._id });
+    res.render('product', { product });
   } catch (error) {
-    res.status(500).send('Error al cargar el producto');
+    res.status(500).send('Error cargando el producto');
   }
 });
 
-router.get('/carts/:cid', async (req, res) => {
+// Vista de carrito
+router.get('/cart/:cid', async (req, res) => {
   try {
-    const cart = await cartManager.getCartByIdPopulated(req.params.cid);
-    res.render('cart', { cart });
+    // Esto después se ajusta cuando adaptemos el cartModel
+    res.render('cart', { cid: req.params.cid });
   } catch (error) {
-    res.status(500).send('Error al cargar el carrito');
+    res.status(500).send('Error cargando el carrito');
   }
 });
 
