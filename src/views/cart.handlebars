@@ -4,10 +4,80 @@
   {{#each cart.products}}
     <li>
       {{this.product.title}} - Cantidad: {{this.quantity}} - Precio unitario: ${{this.product.price}} - Subtotal: ${{multiply this.product.price this.quantity}}
+      <button class="remove-product" data-product-id="{{this.product._id}}" style="margin-left: 10px;">Eliminar</button>
     </li>
   {{/each}}
 </ul>
 
 <p><strong>Total: ${{calculateTotal cart.products}}</strong></p>
 
+<button id="clear-cart" style="margin-top: 10px;">Vaciar carrito</button>
+<button id="finish-purchase" style="margin-top: 10px; margin-left: 10px;">Finalizar compra</button>
+
 <a href="/">Seguir comprando</a>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cartId = "{{cart._id}}";
+
+    // Botones eliminar producto
+    document.querySelectorAll('.remove-product').forEach(button => {
+      button.addEventListener('click', async () => {
+        const productId = button.getAttribute('data-product-id');
+        try {
+          const res = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            alert('Producto eliminado del carrito');
+            location.reload();
+          } else {
+            alert('Error al eliminar producto');
+          }
+        } catch (error) {
+          alert('Error de red');
+        }
+      });
+    });
+
+    // Botón vaciar carrito
+    const clearCartBtn = document.getElementById('clear-cart');
+    if (clearCartBtn) {
+      clearCartBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch(`/api/carts/${cartId}/clear`, {  // <-- Cambié DELETE a POST y la ruta para que coincida con el router
+            method: 'POST'
+          });
+          if (res.ok) {
+            alert('Carrito vaciado');
+            location.reload();
+          } else {
+            alert('Error al vaciar carrito');
+          }
+        } catch (error) {
+          alert('Error de red');
+        }
+      });
+    }
+
+    // Botón finalizar compra
+    const finishPurchaseBtn = document.getElementById('finish-purchase');
+    if (finishPurchaseBtn) {
+      finishPurchaseBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch(`/api/carts/${cartId}/clear`, { // Usamos el mismo endpoint para vaciar carrito
+            method: 'POST'
+          });
+          if (res.ok) {
+            alert('Gracias por comprar nuestros productos!');
+            window.location.href = '/';
+          } else {
+            alert('Error al finalizar compra');
+          }
+        } catch (error) {
+          alert('Error de red');
+        }
+      });
+    }
+  });
+</script>

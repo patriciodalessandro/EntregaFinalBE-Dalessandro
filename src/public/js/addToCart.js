@@ -6,35 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let cartId = localStorage.getItem('cartId');
   let currentCount = 0;
 
-  async function fetchCartCount() {
-    if (!cartId) return;
-
-    try {
-      const res = await fetch(`/api/carts/${cartId}`);
-      if (res.ok) {
-        const cart = await res.json();
-        currentCount = cart.products.reduce((acc, item) => acc + item.quantity, 0);
-        if (cartCountElem) {
-          cartCountElem.textContent = currentCount;
-        }
-      } else {
-        cartCountElem.textContent = 0;
-      }
-    } catch {
-      cartCountElem.textContent = 0;
-    }
-  }
-
   async function createCartIfNotExists() {
     if (!cartId) {
       const res = await fetch('/api/carts', { method: 'POST' });
       const data = await res.json();
       cartId = data._id;
       localStorage.setItem('cartId', cartId);
-      currentCount = 0;
-      if (cartCountElem) {
-        cartCountElem.textContent = currentCount;
-      }
     }
   }
 
@@ -68,6 +45,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  fetchCartCount();
 });

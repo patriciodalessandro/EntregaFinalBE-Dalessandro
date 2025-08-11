@@ -1,14 +1,14 @@
 import { Router } from "express";
-import ProductManager from "../managers/ProductManager.js";
-import CartManager from "../managers/CartManager.js";
+import ProductManager from "../managers/productManager.js";
+import CartManager from "../managers/cartManager.js";
 
 const router = Router();
 const productManager = new ProductManager();
 const cartManager = new CartManager();
 
-const CART_ID = "689a01cb2e53ecfeea0d959d";
+const CART_ID = "689a01cb2e53ecfeea0d959d"; // o usa cookie / localstorage
 
-// Home - vista productos
+// Ruta Home
 router.get("/", async (req, res) => {
   try {
     const { limit = 10, page = 1, sort, query } = req.query;
@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Detalle producto
+// Ruta detalle producto
 router.get("/products/:pid", async (req, res) => {
   try {
     const { pid } = req.params;
@@ -43,7 +43,7 @@ router.get("/products/:pid", async (req, res) => {
   }
 });
 
-// Vista carrito
+// Ruta vista carrito (IMPORTANTE: singular "cart")
 router.get("/cart/:cid", async (req, res) => {
   try {
     const { cid } = req.params;
