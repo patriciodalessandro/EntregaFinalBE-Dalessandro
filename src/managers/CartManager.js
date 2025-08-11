@@ -7,7 +7,8 @@ export default class CartManager {
   }
 
   async getCartById(id) {
-    return await CartModel.findById(id).populate("products.product").lean();
+    // Quité .lean() para que Mongoose devuelva documento con métodos propios
+    return await CartModel.findById(id).populate("products.product");
   }
 
   async addProductToCart(cartId, productId) {
@@ -18,7 +19,7 @@ export default class CartManager {
     if (!product) return null;
 
     const productIndex = cart.products.findIndex(
-      p => p.product.toString() === productId
+      (p) => p.product.toString() === productId
     );
 
     if (productIndex >= 0) {
@@ -27,22 +28,6 @@ export default class CartManager {
       cart.products.push({ product: productId, quantity: 1 });
     }
 
-    return await cart.save();
-  }
-
-  async removeProductFromCart(cartId, productId) {
-    const cart = await CartModel.findById(cartId);
-    if (!cart) return null;
-
-    cart.products = cart.products.filter(p => p.product.toString() !== productId);
-    return await cart.save();
-  }
-
-  async clearCart(cartId) {
-    const cart = await CartModel.findById(cartId);
-    if (!cart) return null;
-
-    cart.products = [];
     return await cart.save();
   }
 }

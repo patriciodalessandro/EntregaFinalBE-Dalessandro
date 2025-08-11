@@ -2,14 +2,24 @@ import productModel from "../models/ProductModel.js";
 
 export default class ProductManager {
   async getProducts({ limit = 10, page = 1, sort, query }) {
-    const filter = query ? { category: query } : {};
+    const filter = {};
+
+    if (query) {
+      // Si query es "true" o "false" se busca por status, sino por category
+      if (query === "true" || query === "false") {
+        filter.status = query === "true";
+      } else {
+        filter.category = query;
+      }
+    }
+
     const sortOptions = sort ? { price: sort === "asc" ? 1 : -1 } : {};
-    
+
     const options = {
       limit,
       page,
       sort: sortOptions,
-      lean: true
+      lean: true,
     };
 
     return await productModel.paginate(filter, options);

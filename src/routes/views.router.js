@@ -1,6 +1,6 @@
 import { Router } from "express";
-import ProductManager from "../managers/productManager.js";
-import CartManager from "../managers/cartManager.js";
+import ProductManager from "../managers/ProductManager.js";
+import CartManager from "../managers/CartManager.js";
 
 const router = Router();
 const productManager = new ProductManager();
@@ -51,6 +51,12 @@ router.get("/cart/:cid", async (req, res) => {
     if (!cart) {
       return res.status(404).send("Carrito no encontrado");
     }
+
+    // Asegurarse que cart.products es al menos un arreglo vacío
+    if (!Array.isArray(cart.products)) {
+      cart.products = [];
+    }
+
     res.render("cart", { cart, cartId: cid });
   } catch (error) {
     res.status(500).send(error.message);

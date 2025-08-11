@@ -25,7 +25,7 @@
       button.addEventListener('click', async () => {
         const productId = button.getAttribute('data-product-id');
         try {
-          const res = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+          const res = await fetch(`/api/carts/${cartId}/products/${productId}`, {
             method: 'DELETE'
           });
           if (res.ok) {
@@ -45,8 +45,8 @@
     if (clearCartBtn) {
       clearCartBtn.addEventListener('click', async () => {
         try {
-          const res = await fetch(`/api/carts/${cartId}/clear`, {  // <-- Cambié DELETE a POST y la ruta para que coincida con el router
-            method: 'POST'
+          const res = await fetch(`/api/carts/${cartId}`, {
+            method: 'DELETE'
           });
           if (res.ok) {
             alert('Carrito vaciado');
@@ -65,8 +65,8 @@
     if (finishPurchaseBtn) {
       finishPurchaseBtn.addEventListener('click', async () => {
         try {
-          const res = await fetch(`/api/carts/${cartId}/clear`, { // Usamos el mismo endpoint para vaciar carrito
-            method: 'POST'
+          const res = await fetch(`/api/carts/${cartId}`, {
+            method: 'DELETE'
           });
           if (res.ok) {
             alert('Gracias por comprar nuestros productos!');

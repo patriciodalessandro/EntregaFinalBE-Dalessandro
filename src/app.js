@@ -28,15 +28,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Configuramos Handlebars con helpers personalizados
+// Configuramos Handlebars con helpers personalizados y runtimeOptions para mongoose
 const hbs = handlebars.create({
   helpers: {
     multiply: (a, b) => a * b,
     calculateTotal: (products) => {
-      return products.reduce((total, item) => total + item.product.price * item.quantity, 0);
+      if (!Array.isArray(products)) return 0;
+      return products.reduce((total, item) => {
+        const price = item.product?.price || 0;
+        const quantity = item.quantity || 0;
+        return total + price * quantity;
+      }, 0);
     }
+  },
+  runtimeOptions: {
+    allowProtoPropertiesByDefault: true,
+    allowProtoMethodsByDefault: true,
   }
-})
+});
 
 app.engine("handlebars", hbs.engine);
 app.set("view engine", "handlebars");
@@ -55,9 +64,9 @@ app.use("/api/carts", (req, res, next) => {
 
 app.use("/", viewsRouter);
 
-// Socket.io
+// Socket.io - logs limpios
 io.on("connection", async (socket) => {
-  console.log("Cliente conectado");
+  // console.log("Cliente conectado");  // Comentado para no mostrar conexión
 
   socket.emit("productos", await productManager.getProducts({}));
 
@@ -72,7 +81,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("Cliente desconectado");
+    // console.log("Cliente desconectado"); // Comentado para no mostrar desconexión
   });
 });
 
