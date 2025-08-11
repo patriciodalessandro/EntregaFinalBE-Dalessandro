@@ -1,116 +1,88 @@
-import express from 'express';
-import { Server } from 'socket.io';
-import handlebars from 'express-handlebars';
-import productsRouter from './routes/products.router.js';
-import cartsRouter from './routes/carts.router.js';
-import viewsRouter from './routes/views.router.js';
-import ProductManager from './managers/ProductManager.js';
-import { createServer } from 'http';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import session from 'express-session';
-import MongoStore from 'connect-mongo';
-import { __dirname } from './utils.js';
-import path from 'path';
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import path from "path";
+import { fileURLToPath } from "url";
+import mongoose from "mongoose";
+import handlebars from "express-handlebars";
+import dotenv from "dotenv";
 
-// Configuración para __dirname en ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import productsRouter from "./routes/products.router.js";
+import cartsRouter from "./routes/carts.router.js";
+import viewsRouter from "./routes/views.router.js";
+import ProductManager from "./managers/ProductManager.js";
 
-// Cargar variables de entorno desde .env
 dotenv.config();
-const MONGO_URI = process.env.MONGO_URI;
 
-if (!MONGO_URI) {
-  console.error('Error: No se encontró MONGO_URI en el archivo .env');
-  process.exit(1);
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer);
+const server = createServer(app);
+const io = new Server(server);
 
-// Session Middleware
-app.use(session({
-  secret: 'secretCoder',
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: MONGO_URI,
-    ttl: 3600 // tiempo de vida de sesión en segundos
-  }),
-}));
+const productManager = new ProductManager();
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
-// Configuración de Handlebars
-app.engine('handlebars', handlebars.engine());
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'handlebars');
-
-// Rutas
-app.use('/api/products', productsRouter);
-app.use('/api/carts', cartsRouter);
-app.use('/', viewsRouter);
-
-// WebSockets
-const productManager = new ProductManager();
-
-io.on('connection', async (socket) => {
-  console.log('Cliente conectado por WebSocket');
-
-  try {
-    // Enviar productos al conectar
-    const productos = await productManager.getProducts({});
-    socket.emit('productos', productos.payload);
-  } catch (error) {
-    console.error('Error cargando productos iniciales:', error.message);
-  }
-
-  // Listener agregar producto
-  socket.on('new-product', async (product) => {
-    try {
-      await productManager.addProduct(product);
-      const productosActualizados = await productManager.getProducts({});
-      io.emit('productos', productosActualizados.payload);
-    } catch (error) {
-      console.error('Error agregando producto:', error.message);
+// Configuramos Handlebars con helpers personalizados
+const hbs = handlebars.create({
+  helpers: {
+    multiply: (a, b) => a * b,
+    calculateTotal: (products) => {
+      return products.reduce((total, item) => total + item.product.price * item.quantity, 0);
     }
+  }
+})
+
+app.engine("handlebars", hbs.engine);
+app.set("view engine", "handlebars");
+app.set("views", path.join(__dirname, "views"));
+
+// Routers con acceso a Socket.io
+app.use("/api/products", (req, res, next) => {
+  req.io = io;
+  next();
+}, productsRouter);
+
+app.use("/api/carts", (req, res, next) => {
+  req.io = io;
+  next();
+}, cartsRouter);
+
+app.use("/", viewsRouter);
+
+// Socket.io
+io.on("connection", async (socket) => {
+  console.log("Cliente conectado");
+
+  socket.emit("productos", await productManager.getProducts({}));
+
+  socket.on("new-product", async (producto) => {
+    await productManager.addProduct(producto);
+    io.emit("productos", await productManager.getProducts({}));
   });
 
-  // Listener eliminar producto
-  socket.on('eliminarProducto', async (id) => {
-    try {
-      await productManager.deleteProduct(id);
-      const productosActualizados = await productManager.getProducts({});
-      io.emit('productos', productosActualizados.payload);
-    } catch (error) {
-      console.error('Error eliminando producto:', error.message);
-    }
+  socket.on("eliminarProducto", async (id) => {
+    await productManager.deleteProduct(id);
+    io.emit("productos", await productManager.getProducts({}));
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Cliente desconectado");
   });
 });
 
-// Conexión a MongoDB y levantar servidor
+// Conexión MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("Conectado a MongoDB"))
+  .catch((err) => console.error("Error de conexión a MongoDB:", err));
+
+// Servidor
 const PORT = 8080;
-
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-  .then(() => {
-    console.log('✅ MongoDB conectado con éxito');
-    httpServer.listen(PORT, () => {
-      console.log(`🚀 Servidor funcionando en http://localhost:${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('❌ Error al conectar MongoDB:', err);
-    process.exit(1);
-  });
-
-export { io };
+server.listen(PORT, () => {
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+});

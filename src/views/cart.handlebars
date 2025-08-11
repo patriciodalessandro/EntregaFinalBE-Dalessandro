@@ -1,23 +1,13 @@
-<h1>Mi carrito</h1>
+<h1>Tu carrito</h1>
 
-{{#if cart.products.length}}
-  <ul>
-    {{#each cart.products}}
-      <li>
-        <strong>{{this.product.title}}</strong><br>
-        Descripción: {{this.product.description}}<br>
-        Precio: ${{this.product.price}}<br>
-        Cantidad: {{this.quantity}}<br>
-        <hr>
-      </li>
-    {{/each}}
-  </ul>
-  <a href="/">Seguir comprando</a>
-{{else}}
-  <p>El carrito está vacío. Vamos a llenarlo con productos!</p>
-  <a href="/">Ver productos</a>
-{{/if}}
+<ul>
+  {{#each cart.products}}
+    <li>
+      {{this.product.title}} - Cantidad: {{this.quantity}} - Precio unitario: ${{this.product.price}} - Subtotal: ${{multiply this.product.price this.quantity}}
+    </li>
+  {{/each}}
+</ul>
 
-<script src="/js/addToCart.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/socketClient.js"></script>
+<p><strong>Total: ${{calculateTotal cart.products}}</strong></p>
+
+<a href="/">Seguir comprando</a>

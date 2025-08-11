@@ -5,7 +5,7 @@ const cartSchema = new mongoose.Schema({
     {
       product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
+        ref: 'Product', 
         required: true
       },
       quantity: { type: Number, default: 1 }
@@ -13,4 +13,6 @@ const cartSchema = new mongoose.Schema({
   ]
 });
 
-export const cartModel = mongoose.model('Cart', cartSchema);
+const CartModel = mongoose.model('Cart', cartSchema);
+
+export default CartModel;

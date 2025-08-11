@@ -1,65 +1,100 @@
-import { Router } from 'express';
-import { productModel } from '../models/product.model.js';
+import { Router } from "express";
+import ProductManager from "../managers/ProductManager.js";
+import CartManager from "../managers/CartManager.js";
 
 const router = Router();
+const productManager = new ProductManager();
+const cartManager = new CartManager();
 
-// GET con paginación, filtros y ordenamiento
-router.get('/', async (req, res) => {
+// Ruta Home con lista de productos
+router.get("/", async (req, res) => {
   try {
     const { limit = 10, page = 1, sort, query } = req.query;
 
-    const filter = query ? { category: query } : {};
-    const options = {
-      limit: parseInt(limit),
-      page: parseInt(page),
-      sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {}
-    };
+    // Usamos cookie para carrito, sino creamos uno
+    let cartId = req.cookies?.cartId;
+    if (!cartId) {
+      const cart = await cartManager.createCart();
+      cartId = cart._id.toString();
+      res.cookie("cartId", cartId, { httpOnly: true });
+    }
 
-    const products = await productModel.paginate(filter, options);
-    res.json(products);
+    const productsData = await productManager.getProducts({ limit, page, sort, query });
+
+    res.render("home", {
+      products: productsData.docs,
+      hasPrevPage: productsData.hasPrevPage,
+      hasNextPage: productsData.hasNextPage,
+      prevPage: productsData.prevPage,
+      nextPage: productsData.nextPage,
+      currentPage: productsData.page,
+      totalPages: productsData.totalPages,
+      cartId
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET por ID
-router.get('/:pid', async (req, res) => {
+// Detalle de producto
+router.get("/products/:pid", async (req, res) => {
   try {
-    const product = await productModel.findById(req.params.pid);
-    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+    const { pid } = req.params;
+
+    let cartId = req.cookies?.cartId;
+    if (!cartId) {
+      const cart = await cartManager.createCart();
+      cartId = cart._id.toString();
+      res.cookie("cartId", cartId, { httpOnly: true });
+    }
+
+    const product = await productManager.getProductById(pid);
+    if (!product) {
+      return res.status(404).send("Producto no encontrado");
+    }
+
+    res.render("product", { product, cartId });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
+
+// API JSON
+router.get("/:pid", async (req, res) => {
+  try {
+    const { pid } = req.params;
+    const product = await productManager.getProductById(pid);
+    if (!product) {
+      return res.status(404).json({ error: "Producto no encontrado" });
+    }
     res.json(product);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST
-router.post('/', async (req, res) => {
+// Crear producto
+router.post("/", async (req, res) => {
   try {
-    const newProduct = await productModel.create(req.body);
+    const product = req.body;
+    const newProduct = await productManager.addProduct(product);
+    req.io.emit("productos", await productManager.getProducts({}));
     res.status(201).json(newProduct);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// PUT
-router.put('/:pid', async (req, res) => {
+// Eliminar producto
+router.delete("/:pid", async (req, res) => {
   try {
-    const updatedProduct = await productModel.findByIdAndUpdate(req.params.pid, req.body, { new: true });
-    if (!updatedProduct) return res.status(404).json({ error: 'Producto no encontrado' });
-    res.json(updatedProduct);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// DELETE
-router.delete('/:pid', async (req, res) => {
-  try {
-    const deletedProduct = await productModel.findByIdAndDelete(req.params.pid);
-    if (!deletedProduct) return res.status(404).json({ error: 'Producto no encontrado' });
-    res.json({ message: 'Producto eliminado con exito' });
+    const { pid } = req.params;
+    const deleted = await productManager.deleteProduct(pid);
+    if (!deleted) {
+      return res.status(404).json({ error: "Producto no encontrado" });
+    }
+    req.io.emit("productos", await productManager.getProducts({}));
+    res.json({ message: "Producto eliminado" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

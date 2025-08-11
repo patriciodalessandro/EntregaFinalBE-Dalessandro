@@ -1,43 +1,38 @@
 <h1>Lista de Productos</h1>
 
-<a href="/carts/{{cid}}" style="display: inline-block; margin-bottom: 20px;">
-  Ver Carrito Actual
-</a>
+<div id="cart-info" style="margin-bottom: 20px; font-weight: bold;">
+  Productos en el carrito: <span id="cart-count">0</span>
+</div>
 
-<div id="product-list" class="products-container" style="display: flex; flex-wrap: wrap; gap: 20px;">
-  {{#each products.docs}}
-    <div class="product-card" style="border: 1px solid #ccc; padding: 10px; width: 250px;">
-      <h3>{{this.title}}</h3>
-      <p><strong>Descripción:</strong> {{this.description}}</p>
-      <p><strong>Precio:</strong> ${{this.price}}</p>
-      <p><strong>Stock:</strong> {{this.stock}}</p>
+<ul>
+  {{#each products}}
+    <li style="margin-bottom: 20px;">
+      <strong>{{this.title}}</strong><br />
+      Precio: ${{this.price}}<br />
+      Categoría: {{this.category}}<br />
+      <a href="/products/{{this._id}}">Ver detalle</a><br />
 
-      <button 
-        class="add-to-cart-btn" 
-        data-pid="{{this._id}}" 
-        data-cid="{{../cid}}"
-      >
+      <button class="add-to-cart" data-id="{{this._id}}" style="margin-top:5px;">
         Agregar al carrito
       </button>
-
-      <br />
-      <a href="/products/{{this._id}}">Ver producto</a>
-    </div>
+    </li>
   {{/each}}
-</div>
+</ul>
 
-<!-- Paginación -->
-<div style="margin-top: 30px;">
-  {{#if products.hasPrevPage}}
-    <a href="/?page={{products.prevPage}}">Página anterior</a>
+<div style="margin-top:20px;">
+  {{#if hasPrevPage}}
+    <a href="/?page={{prevPage}}">Anterior</a>
   {{/if}}
 
-  <span> Página {{products.page}} de {{products.totalPages}} </span>
+  Página {{currentPage}} de {{totalPages}}
 
-  {{#if products.hasNextPage}}
-    <a href="/?page={{products.nextPage}}">Página siguiente</a>
+  {{#if hasNextPage}}
+    <a href="/?page={{nextPage}}">Siguiente</a>
   {{/if}}
 </div>
+
+<a href="#" id="view-cart" style="display:block; margin-top:15px;">Ver carrito</a>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/js/socketClient.js"></script>
 <script src="/js/addToCart.js"></script>

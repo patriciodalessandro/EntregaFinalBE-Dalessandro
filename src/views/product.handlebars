@@ -8,21 +8,18 @@
   <p><strong>Stock:</strong> {{product.stock}}</p>
   <p><strong>Categoría:</strong> {{product.category}}</p>
   {{#if product.thumbnails.[0]}}
-    <img src="{{product.thumbnails.[0]}}" alt="{{product.title}}" style="max-width: 100%;">
+    <img src="{{product.thumbnails.[0]}}" alt="{{product.title}}" style="max-width: 100%;" />
   {{/if}}
   <p><strong>Estado:</strong> 
     {{#if product.status}}Disponible{{else}}No disponible{{/if}}
   </p>
 </div>
 
-<button 
-  class="add-to-cart-btn" 
-  data-pid="{{product._id}}" 
-  data-cid="{{cid}}">
+<button class="add-to-cart" data-id="{{product._id}}" style="margin-top:10px;">
   Agregar al carrito
 </button>
 
-<br><br>
+<br /><br />
 <a href="/">Volver al Home</a>
 
 <script src="/socket.io/socket.io.js"></script>

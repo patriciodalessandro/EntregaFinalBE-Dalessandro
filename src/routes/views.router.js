@@ -1,57 +1,60 @@
-import { Router } from 'express';
-import { productModel } from '../models/product.model.js';
+import { Router } from "express";
+import ProductManager from "../managers/ProductManager.js";
+import CartManager from "../managers/CartManager.js";
 
 const router = Router();
+const productManager = new ProductManager();
+const cartManager = new CartManager();
 
-// Home con paginación y filtros
-router.get('/', async (req, res) => {
+const CART_ID = "689a01cb2e53ecfeea0d959d";
+
+// Home - vista productos
+router.get("/", async (req, res) => {
   try {
-    const { page = 1, limit = 10, sort, query } = req.query;
+    const { limit = 10, page = 1, sort, query } = req.query;
+    const productsData = await productManager.getProducts({ limit, page, sort, query });
 
-    const filter = query ? { category: query } : {};
-    const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {}
-    };
-
-    const products = await productModel.paginate(filter, options);
-
-    res.render('home', {
-      products: products.docs,
-      hasPrevPage: products.hasPrevPage,
-      hasNextPage: products.hasNextPage,
-      prevPage: products.prevPage,
-      nextPage: products.nextPage,
-      currentPage: products.page,
-      totalPages: products.totalPages
+    res.render("home", {
+      products: productsData.docs,
+      hasPrevPage: productsData.hasPrevPage,
+      hasNextPage: productsData.hasNextPage,
+      prevPage: productsData.prevPage,
+      nextPage: productsData.nextPage,
+      currentPage: productsData.page,
+      totalPages: productsData.totalPages,
+      cartId: CART_ID
     });
   } catch (error) {
-    res.status(500).send('Error cargando la vista');
+    res.status(500).send(error.message);
   }
 });
 
-// Vista de producto individual
-router.get('/product/:pid', async (req, res) => {
+// Detalle producto
+router.get("/products/:pid", async (req, res) => {
   try {
-    const product = await productModel.findById(req.params.pid);
-    if (!product) return res.status(404).send('Producto no encontrado');
-
-    res.render('product', { product });
+    const { pid } = req.params;
+    const product = await productManager.getProductById(pid);
+    if (!product) {
+      return res.status(404).send("Producto no encontrado");
+    }
+    res.render("product", { product, cartId: CART_ID });
   } catch (error) {
-    res.status(500).send('Error cargando el producto');
+    res.status(500).send(error.message);
   }
 });
 
-// Vista de carrito
-router.get('/cart/:cid', async (req, res) => {
+// Vista carrito
+router.get("/cart/:cid", async (req, res) => {
   try {
-    // Esto después se ajusta cuando adaptemos el cartModel
-    res.render('cart', { cid: req.params.cid });
+    const { cid } = req.params;
+    const cart = await cartManager.getCartById(cid);
+    if (!cart) {
+      return res.status(404).send("Carrito no encontrado");
+    }
+    res.render("cart", { cart, cartId: cid });
   } catch (error) {
-    res.status(500).send('Error cargando el carrito');
+    res.status(500).send(error.message);
   }
 });
 
 export default router;
-
